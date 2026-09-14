@@ -18,6 +18,7 @@ class RuleDefinition
         public bool $isUuid = false,
         public bool $isUrl = false,
         public bool $isIp = false,
+        public bool $isForeignKey = false,
         public bool $isObject = false,
         public bool $isArrayOfObjects = false,
         public ?float $min = null,
@@ -60,6 +61,14 @@ class RuleDefinition
                 $childLines[] = sprintf('%s%s: %s,', $childIndentStr, $this->formatFieldName($childField), $childDef->toZodExpression($indent + 1, $coerce));
             }
             $expr = sprintf("z.object({\n%s\n%s})", implode("\n", $childLines), $indentStr);
+            if ($this->isNullable) $expr .= '.nullable()';
+            if ($this->isOptional) $expr .= '.optional()';
+            return $expr;
+        }
+
+        // If foreign key reference (e.g., class_id, guardian_id, teacher_id)
+        if ($this->isForeignKey) {
+            $expr = 'z.union([z.string(), z.number()])';
             if ($this->isNullable) $expr .= '.nullable()';
             if ($this->isOptional) $expr .= '.optional()';
             return $expr;
@@ -166,6 +175,11 @@ class RuleDefinition
         // Optional modifier
         if ($this->isOptional) {
             $expr .= '.optional()';
+        }
+
+        // Allow empty string for optional/nullable string fields that have format validations (email, min, url, etc.)
+        if (!$this->isRequired && $this->type === 'string' && ($this->isEmail || $this->min !== null || $this->regex !== null || $this->isUrl)) {
+            $expr .= '.or(z.literal(""))';
         }
 
         // If description exists

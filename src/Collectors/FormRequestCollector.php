@@ -84,6 +84,13 @@ class FormRequestCollector
             /** @var FormRequest $instance */
             $instance = $ref->newInstanceWithoutConstructor();
 
+            if (function_exists('app') && method_exists($instance, 'setContainer')) {
+                $instance->setContainer(app());
+                if (method_exists($instance, 'initialize')) {
+                    $instance->initialize();
+                }
+            }
+
             $rules = [];
             if ($ref->hasMethod('rules')) {
                 $rulesMethod = $ref->getMethod('rules');

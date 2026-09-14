@@ -44,7 +44,7 @@ return [
      | to automatically transform HTML form string inputs into their native JavaScript types.
      |
      */
-    'coerce' => false,
+    'coerce' => true,
 
     /*
      |--------------------------------------------------------------------------

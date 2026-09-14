@@ -38,7 +38,7 @@ class ZodSchemaGeneratorTest extends TestCase
 
         $this->assertStringContainsString('export const storeStudentSchema = z.object({', $output);
         $this->assertStringContainsString('name: z.string().min(1, "Nama wajib diisi.").max(100),', $output);
-        $this->assertStringContainsString('email: z.string().email().max(255).nullable().optional(),', $output);
+        $this->assertStringContainsString('email: z.string().email().max(255).nullable().optional().or(z.literal("")),', $output);
         $this->assertStringContainsString('status: z.enum(["Active", "Inactive"]).nullable().optional(),', $output);
         $this->assertStringContainsString('points: z.number().int().min(1),', $output);
         $this->assertStringContainsString('export type StoreStudentFormData = z.infer<typeof storeStudentSchema>;', $output);

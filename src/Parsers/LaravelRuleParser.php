@@ -148,6 +148,7 @@ class LaravelRuleParser implements RuleParserInterface
         $isUuid = false;
         $isUrl = false;
         $isIp = false;
+        $isForeignKey = false;
         $min = null;
         $max = null;
         $length = null;
@@ -185,6 +186,7 @@ class LaravelRuleParser implements RuleParserInterface
                     'ip', 'ipv4', 'ipv6' => [$type = 'string', $isIp = true],
                     'array' => [$type = 'array'],
                     'file', 'image' => [$type = 'any'],
+                    'exists' => [$isForeignKey = true],
                     'confirmed' => [$fieldMessages['confirmed'] = true],
                     'min' => $ruleParam !== null ? ($min = (float) $ruleParam) : null,
                     'max' => $ruleParam !== null ? ($max = (float) $ruleParam) : null,
@@ -233,6 +235,7 @@ class LaravelRuleParser implements RuleParserInterface
             isUuid: $isUuid,
             isUrl: $isUrl,
             isIp: $isIp,
+            isForeignKey: $isForeignKey,
             min: $min,
             max: $max,
             length: $length,
