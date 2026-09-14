@@ -16,13 +16,117 @@ class LaravelRuleParser implements RuleParserInterface
      */
     public function parse(array $rules, array $messages = []): array
     {
-        $definitions = [];
+        $flatDefinitions = [];
 
+        // 1. First pass: parse each raw rule line
         foreach ($rules as $field => $rawRule) {
-            $definitions[$field] = $this->parseFieldRules($field, $rawRule, $messages);
+            $flatDefinitions[$field] = $this->parseFieldRules($field, $rawRule, $messages);
         }
 
-        return $definitions;
+        // 2. Handle 'confirmed' rule: if 'password' has 'confirmed', ensure 'password_confirmation' exists
+        foreach ($flatDefinitions as $field => $def) {
+            if ($def->messages['confirmed'] ?? false || $this->hasConfirmedRule($rules[$field] ?? null)) {
+                $confirmField = $field . '_confirmation';
+                if (!isset($flatDefinitions[$confirmField])) {
+                    $flatDefinitions[$confirmField] = new RuleDefinition(
+                        fieldName: $confirmField,
+                        type: $def->type,
+                        isRequired: $def->isRequired,
+                        isNullable: $def->isNullable,
+                        isOptional: $def->isOptional,
+                        min: $def->min,
+                        max: $def->max,
+                    );
+                }
+            }
+        }
+
+        // 3. Second pass: structure nested dot notation (`items.*.field`, `parent.child`)
+        return $this->buildNestedTree($flatDefinitions);
+    }
+
+    /**
+     * @param array<string, RuleDefinition> $flat
+     * @return array<string, RuleDefinition>
+     */
+    protected function buildNestedTree(array $flat): array
+    {
+        $root = [];
+        $nestedArrayChildren = []; // parent => [childField => RuleDefinition]
+        $nestedObjectChildren = [];
+
+        foreach ($flat as $field => $def) {
+            // Check for array wildcard notation: `settings.*.day` or `items.*`
+            if (str_contains($field, '.*.')) {
+                $parts = explode('.*.', $field, 2);
+                $parent = $parts[0];
+                $child = $parts[1];
+                $nestedArrayChildren[$parent][$child] = $def;
+                continue;
+            }
+
+            if (str_ends_with($field, '.*')) {
+                $parent = substr($field, 0, -2);
+                if (isset($flat[$parent])) {
+                    $flat[$parent]->arrayElementType = $def->type;
+                }
+                continue;
+            }
+
+            // Check for object dot notation: `profile.bio`
+            if (str_contains($field, '.')) {
+                $parts = explode('.', $field, 2);
+                $parent = $parts[0];
+                $child = $parts[1];
+                $nestedObjectChildren[$parent][$child] = $def;
+                continue;
+            }
+
+            $root[$field] = $def;
+        }
+
+        // Attach array children
+        foreach ($nestedArrayChildren as $parent => $children) {
+            if (!isset($root[$parent])) {
+                $root[$parent] = new RuleDefinition(
+                    fieldName: $parent,
+                    type: 'array',
+                    isRequired: true,
+                    isOptional: false,
+                    isArrayOfObjects: true,
+                );
+            }
+            $root[$parent]->isArrayOfObjects = true;
+            $root[$parent]->children = $this->buildNestedTree($children);
+        }
+
+        // Attach object children
+        foreach ($nestedObjectChildren as $parent => $children) {
+            if (!isset($root[$parent])) {
+                $root[$parent] = new RuleDefinition(
+                    fieldName: $parent,
+                    type: 'object',
+                    isRequired: true,
+                    isOptional: false,
+                    isObject: true,
+                );
+            }
+            $root[$parent]->isObject = true;
+            $root[$parent]->children = $this->buildNestedTree($children);
+        }
+
+        return $root;
+    }
+
+    protected function hasConfirmedRule(mixed $rawRule): bool
+    {
+        if (is_string($rawRule) && str_contains($rawRule, 'confirmed')) {
+            return true;
+        }
+        if (is_array($rawRule) && in_array('confirmed', $rawRule, true)) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -81,6 +185,7 @@ class LaravelRuleParser implements RuleParserInterface
                     'ip', 'ipv4', 'ipv6' => [$type = 'string', $isIp = true],
                     'array' => [$type = 'array'],
                     'file', 'image' => [$type = 'any'],
+                    'confirmed' => [$fieldMessages['confirmed'] = true],
                     'min' => $ruleParam !== null ? ($min = (float) $ruleParam) : null,
                     'max' => $ruleParam !== null ? ($max = (float) $ruleParam) : null,
                     'size', 'digits' => $ruleParam !== null ? ($length = (int) $ruleParam) : null,
@@ -96,7 +201,6 @@ class LaravelRuleParser implements RuleParserInterface
                 };
             } elseif ($rule instanceof In) {
                 $type = 'enum';
-                // Use reflection or string casting for In rule values
                 $ruleStr = (string) $rule;
                 if (str_starts_with($ruleStr, 'in:')) {
                     $valStr = substr($ruleStr, 3);
@@ -114,7 +218,6 @@ class LaravelRuleParser implements RuleParserInterface
             }
         }
 
-        // Default type resolution: if integer or number, keep it; if not specified, default to string
         if ($isRequired) {
             $isOptional = false;
         }

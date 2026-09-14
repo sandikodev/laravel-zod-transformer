@@ -4,9 +4,12 @@ namespace Sandikodev\LaravelZodTransformer\Parsers;
 
 class RuleDefinition
 {
+    /**
+     * @param array<string, RuleDefinition> $children
+     */
     public function __construct(
         public string $fieldName,
-        public string $type = 'string', // 'string' | 'number' | 'boolean' | 'date' | 'array' | 'any' | 'enum'
+        public string $type = 'string', // 'string' | 'number' | 'boolean' | 'date' | 'array' | 'object' | 'any' | 'enum'
         public bool $isRequired = false,
         public bool $isNullable = false,
         public bool $isOptional = true,
@@ -15,6 +18,8 @@ class RuleDefinition
         public bool $isUuid = false,
         public bool $isUrl = false,
         public bool $isIp = false,
+        public bool $isObject = false,
+        public bool $isArrayOfObjects = false,
         public ?float $min = null,
         public ?float $max = null,
         public ?int $length = null,
@@ -23,6 +28,7 @@ class RuleDefinition
         public ?string $arrayElementType = 'any',
         public array $messages = [],
         public ?string $description = null,
+        public array $children = [],
     ) {}
 
     protected function quote(mixed $value): string
@@ -30,17 +36,51 @@ class RuleDefinition
         return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
-    public function toZodExpression(): string
+    public function toZodExpression(int $indent = 1, bool $coerce = false): string
     {
+        $indentStr = str_repeat('    ', $indent);
+        $childIndentStr = str_repeat('    ', $indent + 1);
+
+        // If this field is an array of objects
+        if ($this->isArrayOfObjects && !empty($this->children)) {
+            $childLines = [];
+            foreach ($this->children as $childField => $childDef) {
+                $childLines[] = sprintf('%s%s: %s,', $childIndentStr, $this->formatFieldName($childField), $childDef->toZodExpression($indent + 1, $coerce));
+            }
+            $expr = sprintf("z.array(z.object({\n%s\n%s}))", implode("\n", $childLines), $indentStr);
+            if ($this->isNullable) $expr .= '.nullable()';
+            if ($this->isOptional) $expr .= '.optional()';
+            return $expr;
+        }
+
+        // If this field is a nested object
+        if ($this->isObject && !empty($this->children)) {
+            $childLines = [];
+            foreach ($this->children as $childField => $childDef) {
+                $childLines[] = sprintf('%s%s: %s,', $childIndentStr, $this->formatFieldName($childField), $childDef->toZodExpression($indent + 1, $coerce));
+            }
+            $expr = sprintf("z.object({\n%s\n%s})", implode("\n", $childLines), $indentStr);
+            if ($this->isNullable) $expr .= '.nullable()';
+            if ($this->isOptional) $expr .= '.optional()';
+            return $expr;
+        }
+
         // Base Zod type expression
         $expr = match ($this->type) {
-            'number' => $this->isInteger ? 'z.number().int()' : 'z.number()',
-            'boolean' => 'z.boolean()',
-            'date' => 'z.string().date()',
+            'number' => $coerce 
+                ? ($this->isInteger ? 'z.coerce.number().int()' : 'z.coerce.number()')
+                : ($this->isInteger ? 'z.number().int()' : 'z.number()'),
+            'boolean' => $coerce ? 'z.coerce.boolean()' : 'z.boolean()',
+            'date' => $coerce ? 'z.coerce.date()' : 'z.string().date()',
             'enum' => !empty($this->enumValues) 
                 ? 'z.enum([' . implode(', ', array_map(fn($v) => $this->quote((string) $v), $this->enumValues)) . '])'
                 : 'z.string()',
-            'array' => 'z.array(' . ($this->arrayElementType === 'string' ? 'z.string()' : ($this->arrayElementType === 'number' ? 'z.number()' : 'z.any()')) . ')',
+            'array' => 'z.array(' . match($this->arrayElementType) {
+                'string' => 'z.string()',
+                'number' => $coerce ? 'z.coerce.number()' : 'z.number()',
+                'boolean' => $coerce ? 'z.coerce.boolean()' : 'z.boolean()',
+                default => 'z.any()',
+            } . ')',
             'any' => 'z.any()',
             default => 'z.string()',
         };
@@ -74,7 +114,7 @@ class RuleDefinition
             $requiredMsg = $this->messages['required'] ?? null;
 
             if ($this->type === 'string') {
-                $minLen = $this->min ?? 1;
+                $minLen = $this->min !== null ? (int) $this->min : 1;
                 $expr .= $requiredMsg
                     ? sprintf('.min(%s, %s)', $minLen, $this->quote($requiredMsg))
                     : sprintf('.min(%s)', $minLen);
@@ -85,6 +125,12 @@ class RuleDefinition
                         ? sprintf('.min(%s, %s)', $this->min, $this->quote($minMsg))
                         : sprintf('.min(%s)', $this->min);
                 }
+            } elseif ($this->type === 'array') {
+                $minItems = $this->min !== null ? (int) $this->min : 1;
+                $minMsg = $this->messages['min'] ?? $this->messages['required'] ?? null;
+                $expr .= $minMsg
+                    ? sprintf('.min(%s, %s)', $minItems, $this->quote($minMsg))
+                    : sprintf('.min(%s)', $minItems);
             }
         } else {
             // Optional min rule for strings, numbers, or arrays
@@ -128,5 +174,13 @@ class RuleDefinition
         }
 
         return $expr;
+    }
+
+    protected function formatFieldName(string $field): string
+    {
+        if (preg_match('/[^a-zA-Z0-9_]/', $field)) {
+            return json_encode($field, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        }
+        return $field;
     }
 }

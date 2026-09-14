@@ -67,4 +67,47 @@ class LaravelRuleParserTest extends TestCase
         $this->assertSame('enum', $statusDef->type);
         $this->assertSame(['active', 'inactive'], $statusDef->enumValues);
     }
+
+    public function test_parses_nested_array_wildcard_dot_notation(): void
+    {
+        $rules = [
+            'settings' => 'required|array',
+            'settings.*.day' => 'required|in:Monday,Tuesday',
+            'settings.*.check_in_open' => 'required|date',
+            'settings.*.is_active' => 'sometimes|boolean',
+        ];
+
+        $definitions = $this->parser->parse($rules);
+
+        $this->assertArrayHasKey('settings', $definitions);
+        $settingsDef = $definitions['settings'];
+
+        $this->assertSame('array', $settingsDef->type);
+        $this->assertTrue($settingsDef->isArrayOfObjects);
+        $this->assertCount(3, $settingsDef->children);
+
+        $this->assertArrayHasKey('day', $settingsDef->children);
+        $this->assertSame('enum', $settingsDef->children['day']->type);
+        $this->assertSame(['Monday', 'Tuesday'], $settingsDef->children['day']->enumValues);
+
+        $this->assertArrayHasKey('check_in_open', $settingsDef->children);
+        $this->assertSame('date', $settingsDef->children['check_in_open']->type);
+
+        $this->assertArrayHasKey('is_active', $settingsDef->children);
+        $this->assertSame('boolean', $settingsDef->children['is_active']->type);
+    }
+
+    public function test_parses_confirmed_rule_and_adds_companion_field(): void
+    {
+        $rules = [
+            'password' => 'required|string|min:8|confirmed',
+        ];
+
+        $definitions = $this->parser->parse($rules);
+
+        $this->assertArrayHasKey('password', $definitions);
+        $this->assertArrayHasKey('password_confirmation', $definitions);
+        $this->assertSame('string', $definitions['password_confirmation']->type);
+        $this->assertTrue($definitions['password_confirmation']->isRequired);
+    }
 }

@@ -43,4 +43,21 @@ class ZodSchemaGeneratorTest extends TestCase
         $this->assertStringContainsString('points: z.number().int().min(1),', $output);
         $this->assertStringContainsString('export type StoreStudentFormData = z.infer<typeof storeStudentSchema>;', $output);
     }
+
+    public function test_generates_nested_array_of_objects_schema(): void
+    {
+        $rules = [
+            'settings' => 'required|array',
+            'settings.*.day' => 'required|in:Monday,Tuesday',
+            'settings.*.is_active' => 'sometimes|boolean',
+        ];
+
+        $definitions = $this->parser->parse($rules);
+        $output = $this->generator->generate('bulkSettingsSchema', $definitions);
+
+        $this->assertStringContainsString('export const bulkSettingsSchema = z.object({', $output);
+        $this->assertStringContainsString('settings: z.array(z.object({', $output);
+        $this->assertStringContainsString('day: z.enum(["Monday", "Tuesday"]),', $output);
+        $this->assertStringContainsString('is_active: z.boolean().optional(),', $output);
+    }
 }

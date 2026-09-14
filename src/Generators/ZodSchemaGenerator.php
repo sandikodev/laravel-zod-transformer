@@ -16,6 +16,7 @@ class ZodSchemaGenerator implements SchemaGeneratorInterface
     public function generate(string $schemaName, array $fieldDefinitions, array $options = []): string
     {
         $generateTypes = $options['generate_inferred_types'] ?? true;
+        $coerce = $options['coerce'] ?? false;
         $typePrefix = $options['type_name'] ?? ucfirst($schemaName);
         if (str_ends_with($typePrefix, 'Schema')) {
             $typePrefix = substr($typePrefix, 0, -6);
@@ -25,7 +26,7 @@ class ZodSchemaGenerator implements SchemaGeneratorInterface
         $lines[] = sprintf('export const %s = z.object({', $schemaName);
 
         foreach ($fieldDefinitions as $field => $def) {
-            $zodCode = $def->toZodExpression();
+            $zodCode = $def->toZodExpression(1, $coerce);
             $lines[] = sprintf('    %s: %s,', $this->formatFieldName($field), $zodCode);
         }
 
@@ -42,7 +43,6 @@ class ZodSchemaGenerator implements SchemaGeneratorInterface
 
     protected function formatFieldName(string $field): string
     {
-        // If field has special chars or hyphens, quote it
         if (preg_match('/[^a-zA-Z0-9_]/', $field)) {
             return json_encode($field, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         }
