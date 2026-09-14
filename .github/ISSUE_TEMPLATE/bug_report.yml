@@ -1,0 +1,48 @@
+name: Bug report
+description: Create a report to help us improve Laravel Zod Transformer
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: version
+    attributes:
+      label: Package Version
+      description: What version of `sandikodev/laravel-zod-transformer` are you using?
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: laravel-version
+    attributes:
+      label: Laravel Version
+      description: What version of Laravel are you running?
+      placeholder: e.g. 11.x or 12.x or 13.x
+    validations:
+      required: true
+  - type: textarea
+    id: php-form-request
+    attributes:
+      label: Laravel FormRequest Rules
+      description: Paste the `rules()` and optional `messages()` method here.
+      render: php
+    validations:
+      required: true
+  - type: textarea
+    id: expected-output
+    attributes:
+      label: Expected Zod Output
+      description: What Zod schema did you expect to be generated?
+      render: typescript
+    validations:
+      required: true
+  - type: textarea
+    id: actual-output
+    attributes:
+      label: Actual Generated Output
+      description: What was actually generated?
+      render: typescript
+    validations:
+      required: true

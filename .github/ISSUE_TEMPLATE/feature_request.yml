@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest an idea or new validation rule mapping for Laravel Zod Transformer
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea or a Laravel validation rule you'd like supported? Let us know!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem or missing rule?
+      description: A clear and concise description of what the missing rule or problem is.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution & expected Zod syntax
+      description: How should the rule be transformed into Zod 4 syntax?
+      placeholder: e.g. 'Rule::date()->after('today')' -> z.string().date().refine(...)
+    validations:
+      required: true
