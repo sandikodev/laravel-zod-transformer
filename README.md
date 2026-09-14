@@ -214,7 +214,7 @@ Contributions are welcome! Please feel free to submit a Pull Request. Check out 
 
 ## 📜 Security Vulnerabilities
 
-If you discover any security vulnerabilities, please email **sandiko@konxc.com** instead of using the public issue tracker.
+If you discover any security vulnerabilities within this package, please open a security advisory via [GitHub Security Advisories](https://github.com/sandikodev/laravel-zod-transformer/security/advisories/new).
 
 ---
 
@@ -225,6 +225,5 @@ The MIT License (MIT). Please see [License File](LICENSE) for more information.
 ---
 
 <p align="center">
-  Crafted with ❤️ by <a href="https://github.com/sandikodev"><strong>sandikodev</strong></a><br>
-  <strong>PT Koneksi Jaringan Indonesia</strong>
+  Crafted with ❤️ by <a href="https://github.com/sandikodev"><strong>sandikodev</strong></a>
 </p>
