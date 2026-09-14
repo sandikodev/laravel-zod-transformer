@@ -1,0 +1,43 @@
+{
+    "name": "sandikodev/laravel-zod-transformer",
+    "description": "Seamlessly transform Laravel FormRequests and validation rules into clean, type-safe Zod 4 schemas for React, Vue, and Inertia.js",
+    "keywords": ["laravel", "inertia", "zod", "typescript", "validation", "formrequest", "schema-generator", "sandikodev"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "sandikodev",
+            "email": "sandiko@konxc.com",
+            "homepage": "https://github.com/sandikodev",
+            "role": "Lead Architect & Maintainer"
+        }
+    ],
+    "require": {
+        "php": "^8.2|^8.3|^8.4",
+        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/validation": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/console": "^10.0|^11.0|^12.0|^13.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0",
+        "phpunit/phpunit": "^10.0|^11.0|^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Sandikodev\\LaravelZodTransformer\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Sandikodev\\LaravelZodTransformer\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Sandikodev\\LaravelZodTransformer\\LaravelZodTransformerServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
