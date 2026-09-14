@@ -44,7 +44,7 @@ class ZodSchemaGenerator implements SchemaGeneratorInterface
     {
         // If field has special chars or hyphens, quote it
         if (preg_match('/[^a-zA-Z0-9_]/', $field)) {
-            return json_encode($field);
+            return json_encode($field, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         }
         return $field;
     }
