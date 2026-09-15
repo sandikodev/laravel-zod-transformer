@@ -89,7 +89,7 @@ class GenerateZodSchemasCommand extends Command
         }
 
         $outputDir = dirname($outputFile);
-        if (!is_dir($outputDir)) {
+        if (! is_dir($outputDir)) {
             mkdir($outputDir, 0755, true);
         }
 
@@ -104,7 +104,7 @@ class GenerateZodSchemasCommand extends Command
             strtoupper($driver),
             $schemaCount === 1 ? 'schema' : 'schemas',
             $outputFile,
-            $elapsed
+            $elapsed,
         ));
 
         return self::SUCCESS;

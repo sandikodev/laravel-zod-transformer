@@ -30,7 +30,8 @@ class RuleDefinition
         public array $messages = [],
         public ?string $description = null,
         public array $children = [],
-    ) {}
+    ) {
+    }
 
     protected function quote(mixed $value): string
     {
@@ -43,46 +44,58 @@ class RuleDefinition
         $childIndentStr = str_repeat('    ', $indent + 1);
 
         // If this field is an array of objects
-        if ($this->isArrayOfObjects && !empty($this->children)) {
+        if ($this->isArrayOfObjects && ! empty($this->children)) {
             $childLines = [];
             foreach ($this->children as $childField => $childDef) {
                 $childLines[] = sprintf('%s%s: %s,', $childIndentStr, $this->formatFieldName($childField), $childDef->toZodExpression($indent + 1, $coerce));
             }
             $expr = sprintf("z.array(z.object({\n%s\n%s}))", implode("\n", $childLines), $indentStr);
-            if ($this->isNullable) $expr .= '.nullable()';
-            if ($this->isOptional) $expr .= '.optional()';
+            if ($this->isNullable) {
+                $expr .= '.nullable()';
+            }
+            if ($this->isOptional) {
+                $expr .= '.optional()';
+            }
             return $expr;
         }
 
         // If this field is a nested object
-        if ($this->isObject && !empty($this->children)) {
+        if ($this->isObject && ! empty($this->children)) {
             $childLines = [];
             foreach ($this->children as $childField => $childDef) {
                 $childLines[] = sprintf('%s%s: %s,', $childIndentStr, $this->formatFieldName($childField), $childDef->toZodExpression($indent + 1, $coerce));
             }
             $expr = sprintf("z.object({\n%s\n%s})", implode("\n", $childLines), $indentStr);
-            if ($this->isNullable) $expr .= '.nullable()';
-            if ($this->isOptional) $expr .= '.optional()';
+            if ($this->isNullable) {
+                $expr .= '.nullable()';
+            }
+            if ($this->isOptional) {
+                $expr .= '.optional()';
+            }
             return $expr;
         }
 
         // If foreign key reference (e.g., class_id, guardian_id, teacher_id)
         if ($this->isForeignKey) {
             $expr = 'z.union([z.string(), z.number()])';
-            if ($this->isNullable) $expr .= '.nullable()';
-            if ($this->isOptional) $expr .= '.optional()';
+            if ($this->isNullable) {
+                $expr .= '.nullable()';
+            }
+            if ($this->isOptional) {
+                $expr .= '.optional()';
+            }
             return $expr;
         }
 
         // Base Zod type expression
         $expr = match ($this->type) {
-            'number' => $coerce 
+            'number' => $coerce
                 ? ($this->isInteger ? 'z.coerce.number().int()' : 'z.coerce.number()')
                 : ($this->isInteger ? 'z.number().int()' : 'z.number()'),
             'boolean' => $coerce ? 'z.coerce.boolean()' : 'z.boolean()',
-            'date' => $coerce ? 'z.coerce.date()' : 'z.string().date()',
-            'enum' => !empty($this->enumValues) 
-                ? 'z.enum([' . implode(', ', array_map(fn($v) => $this->quote((string) $v), $this->enumValues)) . '])'
+            'date' => 'z.string().date()',
+            'enum' => ! empty($this->enumValues)
+                ? 'z.enum([' . implode(', ', array_map(fn ($v) => $this->quote((string) $v), $this->enumValues)) . '])'
                 : 'z.string()',
             'array' => 'z.array(' . match($this->arrayElementType) {
                 'string' => 'z.string()',
@@ -178,7 +191,7 @@ class RuleDefinition
         }
 
         // Allow empty string for optional/nullable string fields that have format validations (email, min, url, etc.)
-        if (!$this->isRequired && $this->type === 'string' && ($this->isEmail || $this->min !== null || $this->regex !== null || $this->isUrl)) {
+        if (! $this->isRequired && $this->type === 'string' && ($this->isEmail || $this->min !== null || $this->regex !== null || $this->isUrl)) {
             $expr .= '.or(z.literal(""))';
         }
 

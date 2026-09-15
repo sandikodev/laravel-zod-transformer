@@ -45,25 +45,33 @@ class ValibotSchemaGenerator implements SchemaGeneratorInterface
         $indentStr = str_repeat('    ', $indent);
         $childIndentStr = str_repeat('    ', $indent + 1);
 
-        if ($def->isArrayOfObjects && !empty($def->children)) {
+        if ($def->isArrayOfObjects && ! empty($def->children)) {
             $childLines = [];
             foreach ($def->children as $childField => $childDef) {
                 $childLines[] = sprintf('%s%s: %s,', $childIndentStr, $this->formatFieldName($childField), $this->toValibotExpression($childDef, $indent + 1));
             }
             $expr = sprintf("v.array(v.object({\n%s\n%s}))", implode("\n", $childLines), $indentStr);
-            if ($def->isNullable) $expr = sprintf('v.nullable(%s)', $expr);
-            if ($def->isOptional) $expr = sprintf('v.optional(%s)', $expr);
+            if ($def->isNullable) {
+                $expr = sprintf('v.nullable(%s)', $expr);
+            }
+            if ($def->isOptional) {
+                $expr = sprintf('v.optional(%s)', $expr);
+            }
             return $expr;
         }
 
-        if ($def->isObject && !empty($def->children)) {
+        if ($def->isObject && ! empty($def->children)) {
             $childLines = [];
             foreach ($def->children as $childField => $childDef) {
                 $childLines[] = sprintf('%s%s: %s,', $childIndentStr, $this->formatFieldName($childField), $this->toValibotExpression($childDef, $indent + 1));
             }
             $expr = sprintf("v.object({\n%s\n%s})", implode("\n", $childLines), $indentStr);
-            if ($def->isNullable) $expr = sprintf('v.nullable(%s)', $expr);
-            if ($def->isOptional) $expr = sprintf('v.optional(%s)', $expr);
+            if ($def->isNullable) {
+                $expr = sprintf('v.nullable(%s)', $expr);
+            }
+            if ($def->isOptional) {
+                $expr = sprintf('v.optional(%s)', $expr);
+            }
             return $expr;
         }
 
@@ -74,8 +82,8 @@ class ValibotSchemaGenerator implements SchemaGeneratorInterface
             'number' => $def->isInteger ? 'v.pipe(v.number(), v.integer())' : 'v.number()',
             'boolean' => 'v.boolean()',
             'date' => 'v.pipe(v.string(), v.isoDate())',
-            'enum' => !empty($def->enumValues)
-                ? 'v.picklist([' . implode(', ', array_map(fn($v) => json_encode((string) $v, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), $def->enumValues)) . '])'
+            'enum' => ! empty($def->enumValues)
+                ? 'v.picklist([' . implode(', ', array_map(fn ($v) => json_encode((string) $v, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), $def->enumValues)) . '])'
                 : 'v.string()',
             'array' => 'v.array(v.any())',
             'any' => 'v.any()',
@@ -119,7 +127,7 @@ class ValibotSchemaGenerator implements SchemaGeneratorInterface
             }
         }
 
-        if (!empty($pipeParts)) {
+        if (! empty($pipeParts)) {
             $expr = sprintf('v.pipe(%s, %s)', $baseType, implode(', ', $pipeParts));
         } else {
             $expr = $baseType;

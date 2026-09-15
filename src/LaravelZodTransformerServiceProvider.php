@@ -11,7 +11,7 @@ class LaravelZodTransformerServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(
             __DIR__ . '/../config/zod-transformer.php',
-            'zod-transformer'
+            'zod-transformer',
         );
     }
 

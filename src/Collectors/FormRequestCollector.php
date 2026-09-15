@@ -22,12 +22,12 @@ class FormRequestCollector
         $collected = [];
 
         foreach ($paths as $path) {
-            if (!is_dir($path)) {
+            if (! is_dir($path)) {
                 continue;
             }
 
             $files = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)
+                new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS),
             );
 
             /** @var SplFileInfo $file */
@@ -37,7 +37,7 @@ class FormRequestCollector
                 }
 
                 $className = $this->extractClassNameFromFile($file->getRealPath());
-                if (!$className || !class_exists($className)) {
+                if (! $className || ! class_exists($className)) {
                     continue;
                 }
 
@@ -46,12 +46,12 @@ class FormRequestCollector
                 }
 
                 $ref = new ReflectionClass($className);
-                if (!$ref->isSubclassOf(FormRequest::class) || $ref->isAbstract()) {
+                if (! $ref->isSubclassOf(FormRequest::class) || $ref->isAbstract()) {
                     continue;
                 }
 
                 // Check IgnoreZod attribute
-                if (!empty($ref->getAttributes(IgnoreZod::class))) {
+                if (! empty($ref->getAttributes(IgnoreZod::class))) {
                     continue;
                 }
 
@@ -121,10 +121,10 @@ class FormRequestCollector
     {
         // Check ZodSchema attribute first
         $attrs = $ref->getAttributes(ZodSchema::class);
-        if (!empty($attrs)) {
+        if (! empty($attrs)) {
             /** @var ZodSchema $attrInstance */
             $attrInstance = $attrs[0]->newInstance();
-            if (!empty($attrInstance->name)) {
+            if (! empty($attrInstance->name)) {
                 return $attrInstance->name;
             }
         }

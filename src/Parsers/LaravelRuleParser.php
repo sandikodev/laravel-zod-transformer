@@ -2,8 +2,8 @@
 
 namespace Sandikodev\LaravelZodTransformer\Parsers;
 
-use Illuminate\Validation\Rules\In;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Rules\In;
 use Sandikodev\LaravelZodTransformer\Contracts\RuleParserInterface;
 use UnitEnum;
 
@@ -27,7 +27,7 @@ class LaravelRuleParser implements RuleParserInterface
         foreach ($flatDefinitions as $field => $def) {
             if ($def->messages['confirmed'] ?? false || $this->hasConfirmedRule($rules[$field] ?? null)) {
                 $confirmField = $field . '_confirmation';
-                if (!isset($flatDefinitions[$confirmField])) {
+                if (! isset($flatDefinitions[$confirmField])) {
                     $flatDefinitions[$confirmField] = new RuleDefinition(
                         fieldName: $confirmField,
                         type: $def->type,
@@ -87,7 +87,7 @@ class LaravelRuleParser implements RuleParserInterface
 
         // Attach array children
         foreach ($nestedArrayChildren as $parent => $children) {
-            if (!isset($root[$parent])) {
+            if (! isset($root[$parent])) {
                 $root[$parent] = new RuleDefinition(
                     fieldName: $parent,
                     type: 'array',
@@ -102,7 +102,7 @@ class LaravelRuleParser implements RuleParserInterface
 
         // Attach object children
         foreach ($nestedObjectChildren as $parent => $children) {
-            if (!isset($root[$parent])) {
+            if (! isset($root[$parent])) {
                 $root[$parent] = new RuleDefinition(
                     fieldName: $parent,
                     type: 'object',
@@ -206,15 +206,15 @@ class LaravelRuleParser implements RuleParserInterface
                 $ruleStr = (string) $rule;
                 if (str_starts_with($ruleStr, 'in:')) {
                     $valStr = substr($ruleStr, 3);
-                    $enumValues = array_map(fn($v) => trim($v, '"\' '), explode(',', $valStr));
+                    $enumValues = array_map(fn ($v) => trim($v, '"\' '), explode(',', $valStr));
                 }
             } elseif ($rule instanceof Enum) {
                 $type = 'enum';
                 $enumClass = $this->extractEnumClass($rule);
                 if ($enumClass && is_subclass_of($enumClass, UnitEnum::class)) {
                     $enumValues = array_map(
-                        fn($case) => property_exists($case, 'value') ? $case->value : $case->name,
-                        $enumClass::cases()
+                        fn ($case) => property_exists($case, 'value') ? $case->value : $case->name,
+                        $enumClass::cases(),
                     );
                 }
             }
